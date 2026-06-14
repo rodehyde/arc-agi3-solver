@@ -35,6 +35,9 @@ build/
 results/*.json
 results/*.png
 
+# Debug renders from exploration scripts
+scripts/*.png
+
 # Jupyter
 .ipynb_checkpoints/
 

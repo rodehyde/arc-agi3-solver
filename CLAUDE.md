@@ -32,6 +32,8 @@ Available games (25 total): ar25, bp35, cd82, cn04, dc22, ft09, g50t, ka59, lf52
 - **Grid colours**: 0=white 1=lt-grey 2=md-grey 3=dk-grey 4=vdk-grey 5=black 6=pink 7=lt-pink 8=red 9=blue 10=lt-blue 11=yellow 12=orange 13=maroon 14=green 15=purple
 
 ---
+You are in training mode unless told otherwise. 
+
 
 ## Per-level analysis process
 
@@ -51,6 +53,8 @@ Load the level and write — in words — what is visible:
 - What objects are present? (colour, size, position)
 - What does a win look like? Is there an obvious symmetry or alignment to achieve?
 - Any special objects — dividers, markers, toggles?
+
+Print out your observations here. Do not proceed until you've done so. 
 
 ### 2 — Work out the actions (written in conversation)
 
@@ -81,18 +85,22 @@ Probe each available action one at a time. For each, describe:
 - What value transitions occurred (counters, indicator cells, marker/dot patterns)?
 - Did `available_actions` change? If yes, this action is a **control-scheme toggle**.
 
-**Toggle rule — MUST NOT be skipped:** Any action that changes the grid without producing a useful movement is a candidate toggle. After finding it, probe all actions again in the toggled state to find what becomes available. A toggle may switch the control *axis* (horizontal-only ↔ vertical-enabled) OR switch *which object* you control (e.g. divider ↔ pieces). At least two levels of ar25 use such a toggle. Do not assume a direction or object is unavailable until every toggled state has been probed.
+**Toggle rule — MUST NOT be skipped:** Any action that only produces a colour change somewhere or seems to do nothing is a candidate for a state change. It could be a toggle, or it could actually be two, three, four, or more state changes before getting back to the original state.  After finding it, probe all actions again in the changed state to find what becomes available. A toggle may switch the control *axis* (horizontal-only ↔ vertical-enabled) OR switch *which object* you control (e.g. divider ↔ pieces). At least two levels of ar25 use such a toggle. Do not assume a direction or object is unavailable until every toggled state has been probed.
 
 Action 6 is a **click** that requires an (x, y) coordinate on the 64×64 grid. It is **context-sensitive**: it often only acts when the click lands on the currently-active object, and does nothing on the wrong target — so it must be tested against every distinct object, not one arbitrary point.
 
-### 3 — Hypothesis (written in conversation)
+Print out your observations here. Do not proceed until you've done so. 
+
+### 3 — Game objective Hypothesis (written in conversation)
 
 State in words:
 - If there is a player the player's starting position and the target's position?
 - If there is no player, then any symmetry that could be the winning situation. 
 - How many steps of each type are needed?
-- Which actions satisfy each step, including any toggle before/after?
+- Which actions satisfy each step, including any change states?
 - What is the proposed action sequence in plain English?
+
+Print out your observations here. Do not proceed until you've done so. 
 
 ### 4 — Write code to test the hypothesis
 
@@ -101,15 +109,23 @@ Write a short Python script (not a notebook cell) to:
 2. Execute the proposed sequence
 3. Print before/after positions and whether the level completed
 
-Report the result. If it works, give the ACTIONS list for Cell 7. If not, describe what position was reached vs what was needed, revise the hypothesis (step 3), and re-test.
+Report the result. If it works, give the ACTIONS list for Cell 7. If not, describe what position was reached vs what was needed, 
+
+In Training Mode, revise the hypothesis step 3 and print out the new hypothesis and stop for user input. If in Evaluation Mode, revise the hypothesis and re-test up to three times, and if there's no solution, move on. Print out where you're up to. 
+
 
 ---
 
 ## Recurring structural patterns in ARC3
 
-**Control-scheme toggle.** One action (often a colour-flip or marker change) switches the game between movement modes. In ar25 levels 2+: ACTION5 flips a colour AND switches from horizontal-only to vertical-enabled. When directional actions appear to do nothing, look for the toggle first.
+**Control-scheme change state.** One action (often a colour-flip or marker change) switches the game between different modes. In ar25 levels 2+: ACTION5 flips a colour AND switches from horizontal-only to vertical-enabled. When directional actions appear to do nothing, look for the change state first.
 
 **Compound objects.** Multiple colours that always move together (e.g. an L-shape + embedded markers). Measure step size by top-left corner movement, not centroid.
+
+**Mirror-symmetry puzzles (the "place + reflect" family).** Several ar25 levels are won by making a figure symmetric across one or more movable **mirror bands** (a lt-blue strip that reflects everything on one side onto the other as vdk-grey). The recipe: place the black piece(s) to fill part of the yellow target, then move each band onto the figure's symmetry axis so the reflection completes the rest. One band = a single mirror; two perpendicular bands = **4-fold symmetry** (each placed piece is reflected into 4 copies). The control that moves a band is one state of the multi-state ACTION5 cycle.
+
+> ## ⚠️ Never assume the symmetry axis is the bounding-box centre. SEARCH for it.
+> Assuming the axis is the centre of the figure (or wherever a band happens to start) has wasted real effort. **Always brute-force the actual best vertical and horizontal symmetry axes of the target** (the axis that maps the figure onto itself with the highest match fraction — aim for 1.0), then move the band(s) to centre on those axes. In ar25 L6 the figure was perfectly symmetric about col 19, not col 22 (the bbox centre), and that one wrong assumption blocked the whole level. To place pieces: for each piece, find the shift whose N-fold box-orbit about the true axes is a subset of the target; the placement is the one (or pair) whose orbits union to the whole figure.
 
 **Level-specific mechanics.** Mechanics change between levels. Re-run steps 1–2 at the start of each new level.
 
@@ -130,17 +146,14 @@ The verbal analysis (steps 1–3) happens in conversation. Code for step 4 runs 
 
 ## Autonomous operation
 
-Proceed without asking for confirmation on all local work, and **keep going without pausing for permission between steps or levels.** Do not end a turn with "shall I run this?", "want me to continue?", or "shall I move to the next level?" — just do it and report the result. Work straight through the per-level process (steps 1→4) and straight on to the next level until the game is solved, the budget is exhausted, or you hit something genuinely ambiguous.
+Proceed without asking for confirmation on all local work 
 
-The only reasons to stop and ask:
-- A hypothesis has **failed twice** and you need the user's read on the scene before trying again.
-- The scene is genuinely ambiguous and the analysis process says to stop and review (e.g. unclear game type).
-- `git push`, deleting files, or any operation affecting shared or remote state.
+In Training Mode, At the end of a level If successful, print out the result and wait for confirmation to proceed. If not successful revise the hypothesis step 3 and print out the new hypothesis and stop for user input. 
 
-Otherwise: report findings as you go, but never wait for a "yes" to keep working.
+If in Evaluation Mode, Print out the result and continue. if not successful revise the hypothesis and re-test up to three times, and if there's no solution, move on. Print out where you're up to. 
 
 ## Key questions for ARC3 research
 
-1. Is the control-scheme toggle a universal mechanic across all 25 games?
+1. Is the control-scheme change state operation a universal mechanic across all 25 games?
 2. How many control states does each game have?
 3. Can the world model be derived reliably from the verbal process alone?
