@@ -124,8 +124,15 @@ In Training Mode, revise the hypothesis step 3 and print out the new hypothesis 
 
 **Mirror-symmetry puzzles (the "place + reflect" family).** Several ar25 levels are won by making a figure symmetric across one or more movable **mirror bands** (a lt-blue strip that reflects everything on one side onto the other as vdk-grey). The recipe: place the black piece(s) to fill part of the yellow target, then move each band onto the figure's symmetry axis so the reflection completes the rest. One band = a single mirror; two perpendicular bands = **4-fold symmetry** (each placed piece is reflected into 4 copies). The control that moves a band is one state of the multi-state ACTION5 cycle.
 
-> ## ⚠️ Never assume the symmetry axis is the bounding-box centre. SEARCH for it.
-> Assuming the axis is the centre of the figure (or wherever a band happens to start) has wasted real effort. **Always brute-force the actual best vertical and horizontal symmetry axes of the target** (the axis that maps the figure onto itself with the highest match fraction — aim for 1.0), then move the band(s) to centre on those axes. In ar25 L6 the figure was perfectly symmetric about col 19, not col 22 (the bbox centre), and that one wrong assumption blocked the whole level. To place pieces: for each piece, find the shift whose N-fold box-orbit about the true axes is a subset of the target; the placement is the one (or pair) whose orbits union to the whole figure.
+> ## ⚠️ THREE BIG LEARNINGS for mirror-symmetry levels (ar25 L5–L7). Internalise these — they each unblocked a level only after real effort was wasted.
+>
+> **1 — Find the axes with the CENTROID, never the bounding-box centre.** The two symmetry axes cross at the figure's centroid: the **mean row and mean column of all target (yellow) cells**. Compute it directly — no brute-forcing, no eyeballing. (Assuming the bbox centre cost real effort on L6, which was symmetric about col 19, not col 22. On L7 the centroid was exactly (row 22, col 37) — that is where the two bands must cross.)
+>
+> **2 — Identify the ACTUAL symmetry; test -rotations (eg 90, 180, 270°), not just mirrors.** Two perpendicular mirror bands compose into a **180° rotation**, and many figures are symmetric under the *rotation* but NOT under either mirror alone. At the centroid, measure all three match fractions — mirror-about-col, mirror-about-row, AND 180°-rotation — and believe the data. L7 scored only 0.71 on each mirror but **1.00 on rotation**; testing only mirror symmetry invented a phantom "gap" and sent the analysis down a blind alley for a long time. Place the pieces for the symmetry the figure *actually* has.
+>
+> **3 — The win is to COVER every target cell, NOT to match piece shapes to the target.** Do not waste time forcing exact tilings or requiring each piece's orbit to be a *subset* of the target. The pieces are reflected by the bands (one band → 2 copies; two bands → 4-fold), and you only need the union of those reflected copies to **cover every target square** — the black is allowed to overflow far beyond the target shape. On L7 the winning placement spilled 40 boxes outside the yellow; every search that demanded subset/exact-match found nothing, while "cover, overflow allowed" solved it immediately.
+>
+> **Process:** in Training Mode, a failed hypothesis is a STOP — report it and ask, don't grind through more variations. On L7 each decisive insight (centroid, it's-a-rotation, cover-don't-match) came from the user; grinding between them wasted time and trust.
 
 **Level-specific mechanics.** Mechanics change between levels. Re-run steps 1–2 at the start of each new level.
 
@@ -151,6 +158,7 @@ Proceed without asking for confirmation on all local work
 In Training Mode, At the end of a level If successful, print out the result and wait for confirmation to proceed. If not successful revise the hypothesis step 3 and print out the new hypothesis and stop for user input. 
 
 If in Evaluation Mode, Print out the result and continue. if not successful revise the hypothesis and re-test up to three times, and if there's no solution, move on. Print out where you're up to. 
+
 
 ## Key questions for ARC3 research
 
