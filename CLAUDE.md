@@ -35,6 +35,20 @@ Available games (25 total): ar25, bp35, cd82, cn04, dc22, ft09, g50t, ka59, lf52
 You are in training mode unless told otherwise. 
 
 
+## Mandatory step markers — enforced gate
+
+Before writing ANY code or script for a level, the following markers MUST appear in the conversation output, in order. Their absence before a code block is a verifiable process violation.
+
+```
+STEP 1 COMPLETE — [scene description summary]
+STEP 2 COMPLETE — ACTION TABLE: [full table]
+STEP 3 HYPOTHESIS: [proposed sequence in plain English]
+```
+
+These markers are not optional, not abbreviatable, and not post-hoc. They must be printed before the first tool call that writes or runs code. In evaluation mode they still apply — the markers appear in output even when no human is reading.
+
+---
+
 ## Per-level analysis process
 
 **MUST follow this sequence for every level. Do not jump to testing a sequence before completing all four steps.**
@@ -110,9 +124,18 @@ Write a short Python script (not a notebook cell) to:
 2. Execute the proposed sequence
 3. Print before/after positions and whether the level completed
 
-Report the result. If it works, give the ACTIONS list for Cell 7. If not, describe what position was reached vs what was needed, 
+**After-action grid inspection (Step 4 guard)**
 
-In Training Mode, revise the hypothesis step 3 and print out the new hypothesis and stop for user input. If in Evaluation Mode, revise the hypothesis and re-test up to three times, and if there's no solution, move on. Print out where you're up to. 
+Before running the full sequence, validate the first click:
+1. Record the expected state: which tiles should change and how.
+2. Execute the click. Compare the actual grid to expected using the full cell-change instrument (not just bounding box).
+3. If actual matches expected → proceed with the full sequence.
+4. If **any** click in the sequence produces an unexpected result → STOP. Return to Step 2, re-probe the failing action, and revise the hypothesis.
+5. If the revised hypothesis still fails at any point → switch to **step-by-step inspection**: after every click, compare actual to expected and correct the sequence in-place before continuing.
+
+Report the result. If it works, give the ACTIONS list for Cell 7. If not, describe what position was reached vs what was needed.
+
+In Training Mode, revise the hypothesis step 3 and print out the new hypothesis and stop for user input. If in Evaluation Mode, revise the hypothesis and re-test up to three times, and if there's no solution, move on. Print out where you're up to.
 
 
 ---
@@ -160,7 +183,9 @@ Proceed without asking for confirmation on all local work
 
 In Training Mode, At the end of a level If successful, print out the result and wait for confirmation to proceed. If not successful revise the hypothesis step 3 and print out the new hypothesis and stop for user input. 
 
-If in Evaluation Mode, Print out the result and continue. if not successful revise the hypothesis and re-test up to three times, and if there's no solution, move on. Print out where you're up to. 
+If in Evaluation Mode, Print out the result and continue. if not successful revise the hypothesis and re-test up to three times, and if there's no solution, move on. Print out where you're up to.
+
+**After each level completes, check `win_levels` before starting the next level.** If `levels_completed >= win_levels`, the game is finished — do not attempt a further level. The victory screen may render as a grid that looks like a puzzle; ignore it.
 
 
 ## Memory policy
