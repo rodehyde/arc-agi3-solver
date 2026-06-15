@@ -1,5 +1,5 @@
 # CLAUDE.md — ARC-AGI-3
-*Last updated: 2026-06-13*
+*Last updated: 2026-06-15*
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -49,6 +49,7 @@ We will develop special instructions for the different types of games as we prog
  
 Load the level and write — in words — what is visible:
 - try and identify the type of game, and if it's unclear, stop and review
+- **State what is FAMILIAR vs what is NEW.** Which mechanics have already been confirmed in prior levels of this game? What looks different or unconfirmed at this level? This prevents re-deriving known rules and flags genuine novelty early.
 
 - What objects are present? (colour, size, position)
 - What does a win look like? Is there an obvious symmetry or alignment to achieve?
@@ -128,11 +129,13 @@ In Training Mode, revise the hypothesis step 3 and print out the new hypothesis 
 >
 > **1 — Find the axes with the CENTROID, never the bounding-box centre.** The two symmetry axes cross at the figure's centroid: the **mean row and mean column of all target (yellow) cells**. Compute it directly — no brute-forcing, no eyeballing. (Assuming the bbox centre cost real effort on L6, which was symmetric about col 19, not col 22. On L7 the centroid was exactly (row 22, col 37) — that is where the two bands must cross.)
 >
-> **2 — Identify the ACTUAL symmetry; test -rotations (eg 90, 180, 270°), not just mirrors.** Two perpendicular mirror bands compose into a **180° rotation**, and many figures are symmetric under the *rotation* but NOT under either mirror alone. At the centroid, measure all three match fractions — mirror-about-col, mirror-about-row, AND 180°-rotation — and believe the data. L7 scored only 0.71 on each mirror but **1.00 on rotation**; testing only mirror symmetry invented a phantom "gap" and sent the analysis down a blind alley for a long time. Place the pieces for the symmetry the figure *actually* has.
+> **2 — Identify the ACTUAL symmetry; test rotations (e.g. 90°, 180°, 270°), not just mirrors.** Two perpendicular mirror bands compose into a **180° rotation**, and many figures are symmetric under a *rotation* but NOT under any mirror alone. At the centroid, measure all three match fractions — mirror-about-col, mirror-about-row, AND 180°-rotation — and believe the data. L7 scored only 0.71 on each mirror but **1.00 on rotation**; testing only mirror symmetry invented a phantom "gap" and sent the analysis down a blind alley for a long time. Place the pieces for the symmetry the figure *actually* has.
 >
 > **3 — The win is to COVER every target cell, NOT to match piece shapes to the target.** Do not waste time forcing exact tilings or requiring each piece's orbit to be a *subset* of the target. The pieces are reflected by the bands (one band → 2 copies; two bands → 4-fold), and you only need the union of those reflected copies to **cover every target square** — the black is allowed to overflow far beyond the target shape. On L7 the winning placement spilled 40 boxes outside the yellow; every search that demanded subset/exact-match found nothing, while "cover, overflow allowed" solved it immediately.
 >
 > **Process:** in Training Mode, a failed hypothesis is a STOP — report it and ask, don't grind through more variations. On L7 each decisive insight (centroid, it's-a-rotation, cover-don't-match) came from the user; grinding between them wasted time and trust.
+
+**Rule stability across levels.** Once a rule has been confirmed to win a level, treat it as correct for subsequent levels of the same game until there is strong evidence it has changed. Don't reopen confirmed rules without cause — focus on what's *new* at the current level. If a previously confirmed rule appears to fail, look for a *new* mechanic layered on top before concluding the rule has changed.
 
 **Level-specific mechanics.** Mechanics change between levels. Re-run steps 1–2 at the start of each new level.
 
@@ -159,6 +162,16 @@ In Training Mode, At the end of a level If successful, print out the result and 
 
 If in Evaluation Mode, Print out the result and continue. if not successful revise the hypothesis and re-test up to three times, and if there's no solution, move on. Print out where you're up to. 
 
+
+## Memory policy
+
+Working notes about the current game (confirmed mechanics, per-level findings, open questions) live in a **per-task memory file** at `.claude/projects/…/memory/`. This file survives logoff and context compaction — prior level findings are available when returning to the same game in a new session.
+
+**When switching to a new game: clear the per-task memory file** so it doesn't contaminate the fresh task.
+
+Only insights general enough to apply across *multiple* games belong in CLAUDE.md. Per-game findings stay in the per-task memory file and are cleared with it.
+
+---
 
 ## Key questions for ARC3 research
 
