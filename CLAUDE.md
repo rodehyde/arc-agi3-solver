@@ -9,6 +9,17 @@ ARC-AGI-3 is a set of interactive 2D game environments. An agent must play each 
 
 The central challenge: **the rules are unknown at the start of each game.** The agent must explore, form hypotheses, test them, and converge on the optimal action sequence — all within a budget.
 
+These tasks are very difficult and the difficulty increases with each level. They're designed to test you to and beyond your limit. We're working on producing a structured approach based on our learnings by completing tasks. 
+
+This is equivalent to the way human beings are taught general principles and processes and then learned by example.
+
+For this project to be valuable it is vital that:
+The structured approach is used throughout and any creativity occurs within that approach.
+The only information that you're allowed to use about the task is the grid and the actions available. You must not cheat by finding information about the task online Or in the code you have available 
+
+
+
+
 ## Data
 
 - `environment_files/` — 25 game environments, each with a Python game file and `metadata.json`
@@ -28,7 +39,8 @@ Available games (25 total): ar25, bp35, cd82, cn04, dc22, ft09, g50t, ka59, lf52
 - **Grid**: up to 64×64, values 0–15
 - **Actions**: RESET, ACTION1–ACTION7 (subset available per game; check `available_actions` in frame)
 - **Win condition**: `levels_completed == win_levels`
-- **Frame**: multi-layer; `frame[-1]` is the top (visible) layer
+- **Observation API**: `obs.frame` is the list of grid layers; `obs.frame[-1]` is the top visible layer. Key fields: `obs.available_actions`, `obs.levels_completed`, `obs.win_levels`. Do NOT use `obs.grid` — it does not exist.
+- **Step 1 script discipline**: Write one comprehensive inspection script — explore obs attributes, display bounding box, print values present — in a single pass. Never suppress stderr (`2>/dev/null`) during exploration; silent failures waste round-trips.
 - **Grid colours**: 0=white 1=lt-grey 2=md-grey 3=dk-grey 4=vdk-grey 5=black 6=pink 7=lt-pink 8=red 9=blue 10=lt-blue 11=yellow 12=orange 13=maroon 14=green 15=purple
 
 ---
@@ -46,6 +58,8 @@ STEP 3 HYPOTHESIS: [proposed sequence in plain English]
 ```
 
 These markers are not optional, not abbreviatable, and not post-hoc. They must be printed before the first tool call that writes or runs code. In evaluation mode they still apply — the markers appear in output even when no human is reading.
+
+When something difficult Is encountered, and that can be when you've worked on a Problem for more than two minutes. Print out an interim statement and wait to be told to proceed. 
 
 ---
 
@@ -108,12 +122,24 @@ Print out your observations here. Do not proceed until you've done so.
 
 ### 3 — Game objective Hypothesis (written in conversation)
 
+**Before forming a hypothesis, read these memory files:**
+- `memory/feedback_hypothesis_reasoning.md` — prompts for cutting through over-complicated hypotheses
+- `memory/feedback_hypothesis_evaluation.md` — four checks to run before proceeding to Step 4
+
 State in words:
 - If there is a player the player's starting position and the target's position?
 - If there is no player, then any symmetry that could be the winning situation. 
 - How many steps of each type are needed?
 - Which actions satisfy each step, including any change states?
 - What is the proposed action sequence in plain English?
+
+**Before proceeding to Step 4 — evaluate the hypothesis:**
+1. Does it contradict anything observed in Steps 1 or 2? If yes, revise first.
+2. What are one or two alternative hypotheses? Why is yours more likely than those?
+3. Is the complexity appropriate for the level number? Level 1 should have a simple, obvious win condition. Don't propose a complex path when a simple one is consistent with the evidence.
+4. For maze-type games: render the grid and confirm the proposed path is physically possible before writing any code.
+
+Only proceed to Step 4 with the hypothesis you would genuinely bet on.
 
 Print out your observations here. Do not proceed until you've done so. 
 
@@ -154,7 +180,7 @@ In Training Mode, revise the hypothesis step 3 and print out the new hypothesis 
 >
 > **2 — Identify the ACTUAL symmetry; test rotations (e.g. 90°, 180°, 270°), not just mirrors.** Two perpendicular mirror bands compose into a **180° rotation**, and many figures are symmetric under a *rotation* but NOT under any mirror alone. At the centroid, measure all three match fractions — mirror-about-col, mirror-about-row, AND 180°-rotation — and believe the data. L7 scored only 0.71 on each mirror but **1.00 on rotation**; testing only mirror symmetry invented a phantom "gap" and sent the analysis down a blind alley for a long time. Place the pieces for the symmetry the figure *actually* has.
 >
-> **3 — The win is to COVER every target cell, NOT to match piece shapes to the target.** Do not waste time forcing exact tilings or requiring each piece's orbit to be a *subset* of the target. The pieces are reflected by the bands (one band → 2 copies; two bands → 4-fold), and you only need the union of those reflected copies to **cover every target square** — the black is allowed to overflow far beyond the target shape. On L7 the winning placement spilled 40 boxes outside the yellow; every search that demanded subset/exact-match found nothing, while "cover, overflow allowed" solved it immediately.
+> **3 — The win could be to COVER every target cell, NOT to match piece shapes to the target.** Do not waste time forcing exact tilings or requiring each piece's orbit to be a *subset* of the target. The pieces are reflected by the bands (one band → 2 copies; two bands → 4-fold), and you only need the union of those reflected copies to **cover every target square** — the black is allowed to overflow far beyond the target shape. On L7 the winning placement spilled 40 boxes outside the yellow; every search that demanded subset/exact-match found nothing, while "cover, overflow allowed" solved it immediately.
 >
 > **Process:** in Training Mode, a failed hypothesis is a STOP — report it and ask, don't grind through more variations. On L7 each decisive insight (centroid, it's-a-rotation, cover-don't-match) came from the user; grinding between them wasted time and trust.
 
@@ -178,8 +204,15 @@ The verbal analysis (steps 1–3) happens in conversation. Code for step 4 runs 
 ---
 
 ## Autonomous operation
+When In training mode Proceed without asking for confirmation on all local work except for the hard stops listed below.
 
-Proceed without asking for confirmation on all local work 
+**Training mode hard stops — wait for user confirmation before continuing:**
+1. After Step 1 is printed — before starting Step 2 probing
+2. After Step 2 action table is printed — before stating Step 3 hypothesis
+3. After Step 3 hypothesis is printed — before writing any Step 4 code
+4. After a level completes (success or failure)
+
+When not in training mode Proceed without asking for confirmation on all local work 
 
 In Training Mode, At the end of a level If successful, print out the result and wait for confirmation to proceed. If not successful revise the hypothesis step 3 and print out the new hypothesis and stop for user input. 
 
