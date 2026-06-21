@@ -1,0 +1,89 @@
+"""m0r0 Level 3 — BFS with corrected 4-component state.
+
+Level 3 has independent block movement: when one block is wall-blocked,
+only the unblocked block moves. State = (left_row, left_col, right_row, right_col).
+Blue cells (9) treated as accessible alongside black (5).
+Replay from scratch per expansion.
+"""
+from collections import deque
+import numpy as np
+from arc_agi import Arcade, OperationMode
+from arcengine import GameAction
+
+L1 = 'UUXUUUUUCUCCCCCDDDCDDDDDXD'
+L2 = 'DXXXDDDCCUCCDDDDDDXXXXXCCCCCCU'
+AMAP = {'U': GameAction.ACTION1, 'D': GameAction.ACTION2,
+        'X': GameAction.ACTION3, 'C': GameAction.ACTION4}
+
+
+def make_l3():
+    arcade = Arcade(operation_mode=OperationMode.OFFLINE)
+    env = arcade.make('m0r0')
+    obs = env.observation_space
+    for a in L1 + L2:
+        obs = env.step(AMAP[a])
+    return env, obs
+
+
+def get_state(obs):
+    grid = np.array(obs.frame[-1])
+    cells = np.argwhere(grid == 10)
+    if len(cells) == 0:
+        return None
+    left  = cells[cells[:, 1] < 32]
+    right = cells[cells[:, 1] >= 32]
+    if len(left) == 0 or len(right) == 0:
+        return None  # overlap / merged — win detected separately
+    return (int(left[:, 0].min()),  int(left[:, 1].min()),
+            int(right[:, 0].min()), int(right[:, 1].min()))
+
+
+def replay_to(path):
+    env, obs = make_l3()
+    for a in path:
+        obs = env.step(AMAP[a])
+    return env, obs
+
+
+env0, obs0 = make_l3()
+initial = get_state(obs0)
+print(f"Initial state: left=({initial[0]},{initial[1]}) right=({initial[2]},{initial[3]})")
+print(f"Baseline=203 actions. Searching with 4-component state...\n")
+
+queue = deque([(initial, [])])
+visited = {initial}
+found = None
+n = 0
+
+while queue and not found:
+    state, path = queue.popleft()
+    n += 1
+
+    if n % 200 == 0:
+        print(f"  {n} states, queue={len(queue)}, depth={len(path)}, "
+              f"visited={len(visited)}")
+
+    for name in ['U', 'D', 'X', 'C']:
+        env, obs = replay_to(path)
+        obs2 = env.step(AMAP[name])
+
+        if obs2.levels_completed > 2:
+            found = path + [name]
+            break
+
+        ns = get_state(obs2)
+        if ns and ns not in visited:
+            visited.add(ns)
+            queue.append((ns, path + [name]))
+
+if found:
+    seq = ''.join(found)
+    print(f"\nSOLUTION FOUND: {seq}")
+    print(f"Moves: {len(found)}  |  Baseline: 203  |  States explored: {n}")
+    print(f"Total reachable states: {len(visited)}")
+else:
+    print(f"\nNo solution found after {n} states explored.")
+    print(f"Total reachable states: {len(visited)}")
+    print("\nAll reachable states (left_row, left_col, right_row, right_col):")
+    for s in sorted(visited):
+        print(f"  L({s[0]},{s[1]}) R({s[2]},{s[3]})")

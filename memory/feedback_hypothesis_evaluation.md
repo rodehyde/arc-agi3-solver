@@ -17,6 +17,8 @@ Before writing any Step 4 code, explicitly evaluate the hypothesis rather than j
 3. **Level-appropriate simplicity:** Level 1 should have a simple, obvious win. Don't propose a complex path when a simple one is consistent with the evidence. Complexity should increase with level number.
 4. **Physical plausibility (maze games):** If movement is constrained by structure, render the grid and confirm the proposed path is navigable before writing code.
 
+5. **Verify every dismissal:** If you ruled out an alternative during Steps 1–3, name the specific observation that ruled it out and confirm it is directly measured, not inferred. If the ruling-out evidence is itself a model output or an indirect inference, the alternative is not eliminated — re-examine it before committing to your preferred hypothesis. Circumstantial evidence (e.g. "the baseline is high, so a simple solution is unlikely") is never sufficient to eliminate an approach.
+
 Only proceed to Step 4 with the hypothesis you would genuinely bet on — not the first one that comes to mind.
 
 See also [[feedback-hypothesis-reasoning]] for the complementary prompts that help form a good hypothesis in the first place.
