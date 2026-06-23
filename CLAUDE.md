@@ -105,9 +105,9 @@ Write in words:
 - What does a win look like?
 - Any special objects — dividers, markers, toggles?
 
-**Required: print the rendered grid** (char-map render script).
+**Required: print and save the full char-map grid** to the level data file (see *Level data files* below). The render must cover the complete grid extent, not just the region of interest.
 
-**Required: produce a zone map** — every distinct region by row range, column range, colour, and accessibility (track vs background/void).
+**Required: produce a zone map** — every distinct region by row range, column range, colour, and accessibility (track vs background/void). Save it to the data file with exact cell values verified.
 
 **Required: one-sentence purpose description** — what this grid IS, not what colours are where. Must be consistent with every zone. Flag any contradiction before proceeding.
 
@@ -141,7 +141,7 @@ Probe every available action. Standards:
 1. **Any-cell-change instrument** — full grid compare before/after. Report: cells changed, bounding box of change, every value transition (`0→9:20, 11→12:1`). Movement-only tracking is forbidden as the basis for "no effect."
 2. **Every action 1–7** in every control mode (re-probe after each toggle).
 3. **ACTION6: every distinct object** — not one arbitrary point. "No effect" requires testing every distinct target.
-4. **All frames** — count frames: 1=no event, 5–6=animation, 8=panel fire, 11+=completion. Read every frame. A button appearing inert in frame[-1] may drive a full animation.
+4. **All frames, complete diffs** — count frames: 1=no event, 5–6=animation, 8=panel fire, 11+=completion. For every probe, record the complete cell-change diff for EVERY frame in the data file: all changed cells and all value transitions — not just the piece bounding box. A button appearing inert in frame[-1] may drive a full animation invisible without this check.
 5. **"No effect" is a conclusion** — only after the any-cell-change instrument shows zero changed cells.
 6. **Toggle rule** — any colour-change or apparent no-op may be a state toggle. Probe all actions again in the changed state. Build this second-pass into the script.
 7. **Probe every distinct colour** — navigate to each colour type and probe from there.
@@ -277,7 +277,32 @@ Working notes live in a **per-task memory file** at `.claude/projects/…/memory
 
 Only insights applicable across multiple games belong in CLAUDE.md. Per-game findings stay in the per-task file.
 
-**Write structural relationships, not specific values.** Record the relationship ("panel A's pre-activated state encodes panel B's valid configurations"), not the specific values. Re-derive values from the current level's observed state at each new level.
+**Working notes = structural relationships.** Record the relationship ("panel A's pre-activated state encodes panel B's valid configurations"), not specific values. Specific values belong in the level data file where they survive compaction.
+
+---
+
+## Level data files — hard data that must never be lost
+
+Context compaction summarises conversation; files survive intact. All hard data must be written to a level data file as it is discovered — never left only in conversation context.
+
+**Naming:** `memory/<game>_l<N>_data.md` (e.g., `memory/tn36_l5_data.md`). Create this file at the start of Step 1.
+
+**What goes in the data file (required):**
+- Full char-map grid render — Step 1
+- Zone map with exact cell values verified — Step 1
+- Every probe action: frame count + complete cell-change diff for every frame (all changed cells, all value transitions) — Step 2
+- Exact element positions and values (row/col ranges, colour values) — Step 2
+
+**What goes in the working notes file:** Action Table, Function Table, hypotheses, conclusions — analysis only, not raw data.
+
+**Script requirement:** every probe script writes to both stdout and the data file using a one-line helper:
+```python
+def log(s): print(s); open('memory/<game>_l<N>_data.md', 'a').write(s + '\n')
+```
+
+**Before starting any step:** read the data file to restore hard data that may have been compacted out of conversation context. Do not rely on conversation memory for specific values.
+
+**Commit the data file** to the repo after each level completes.
 
 ---
 
